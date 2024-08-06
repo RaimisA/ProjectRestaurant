@@ -11,6 +11,7 @@ namespace ProjectRestaurant.Services
     {
         public void SendEmail(string to, string subject, string body)
         {
+            
             // Implementation for sending email
         }
     }

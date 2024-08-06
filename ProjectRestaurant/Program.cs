@@ -3,6 +3,7 @@ using ProjectRestaurant.Services;
 using ProjectRestaurant.Models;
 using ProjectRestaurant.Services.Interfaces;
 using ProjectRestaurant.Repositories;
+using ProjectRestaurant.Presentation;
 
 namespace ProjectRestaurant
 {
@@ -22,16 +23,26 @@ namespace ProjectRestaurant
             //        2.1 Table number, seats at the table
             //        2.2 Ordered drinks and food. Total price to be paid
             //        2.3 Date and time of the order
-                
+
             //    3. There should be 2 checks created from the order:
             //        3.1 One for the restaurant. One for the client. (the checks should be different)
-                
+
             //    4. Both checks should be emailed to the client and the restaurant(Use interface for this)
-                
+
             //    5. According to the client needs it should be possible to not print a client check, but the restaurant check should always be printed. Also restaurant check should be saved in a file.
 
             //    Unit tests are required for the system.
+            var tableRepository = new TableRepository();
+            var orderRepository = new OrderRepository();
+            var orderService = new OrderService(orderRepository, tableRepository);
+            var emailService = new EmailService();
+            var checkService = new CheckService();
 
+            var restaurant = new Restaurant(tableRepository, orderRepository, orderService, checkService, emailService);
+            var menuPresentation = new MenuPresentation(restaurant);
+
+            // Display the menu
+            menuPresentation.DisplayMenu();
         }
     }
 }
