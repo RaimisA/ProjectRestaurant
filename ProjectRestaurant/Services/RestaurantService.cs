@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ProjectRestaurant.Services
 {
-    public class Restaurant
+    public class RestaurantService
     {
         private readonly TableRepository _tableRepository;
         private readonly OrderRepository _orderRepository;
@@ -17,7 +17,7 @@ namespace ProjectRestaurant.Services
         private readonly CheckService _checkService;
         private readonly IEmailService _emailService;
 
-        public Restaurant(TableRepository tableRepository, OrderRepository orderRepository, OrderService orderService, CheckService checkService, IEmailService emailService)
+        public RestaurantService(TableRepository tableRepository, OrderRepository orderRepository, OrderService orderService, CheckService checkService, IEmailService emailService)
         {
             _tableRepository = tableRepository;
             _orderRepository = orderRepository;
@@ -28,18 +28,12 @@ namespace ProjectRestaurant.Services
 
         public void RegisterOrder(Order order)
         {
-            _orderService.PlaceOrder(order);
+            _orderService.PlaceOrder();
             _checkService.PrintCheck(order, isClientCheck: true);
             _checkService.SaveCheckToFile(order, "restaurant_check.txt");
 
-            // Send emails
-            _emailService.SendEmail("client@example.com", "Your Order", "Order details...");
+            _emailService.SendEmail(order.Client.Email, "Your Order", "Order details...");
             _emailService.SendEmail("restaurant@example.com", "New Order", "Order details...");
-        }
-
-        public List<Table> GetTables()
-        {
-            return _tableRepository.GetAllTables();
         }
 
         public List<Order> GetOrders()

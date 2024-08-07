@@ -11,8 +11,10 @@ namespace ProjectRestaurant.Services
     {
         public void SendEmail(string to, string subject, string body)
         {
-            
-            // Implementation for sending email
+            // Simulation of sending an email
+            Console.WriteLine($"Sending email to {to}");
+            Console.WriteLine($"Subject: {subject}");
+            Console.WriteLine($"Body: {body}");
         }
     }
 }

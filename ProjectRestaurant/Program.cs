@@ -32,16 +32,26 @@ namespace ProjectRestaurant
             //    5. According to the client needs it should be possible to not print a client check, but the restaurant check should always be printed. Also restaurant check should be saved in a file.
 
             //    Unit tests are required for the system.
-            var tableRepository = new TableRepository();
-            var orderRepository = new OrderRepository();
-            var orderService = new OrderService(orderRepository, tableRepository);
+
+            var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            var foodFilePath = Path.Combine(baseDirectory, "data", "food.csv");
+            var drinksFilePath = Path.Combine(baseDirectory, "data", "drinks.csv");
+            var tablesFilePath = Path.Combine(baseDirectory, "data", "tables.csv");
+            var ordersFilePath = Path.Combine(baseDirectory, "data", "orders.json");
+
+            var tableRepository = new TableRepository(tablesFilePath);
+            var orderRepository = new OrderRepository(ordersFilePath);
+            var itemRepository = new ItemRepository(foodFilePath, drinksFilePath);
+
+            var orderService = new OrderService(orderRepository, itemRepository, tableRepository);
             var emailService = new EmailService();
             var checkService = new CheckService();
+            var tableService = new TableService(tableRepository);
 
-            var restaurant = new Restaurant(tableRepository, orderRepository, orderService, checkService, emailService);
-            var menuPresentation = new MenuPresentation(restaurant);
+            var restaurantService = new RestaurantService(tableRepository, orderRepository, orderService, checkService, emailService);
 
-            // Display the menu
+            var menuPresentation = new MenuPresentation(restaurantService, itemRepository, orderService, tableService);
+
             menuPresentation.DisplayMenu();
         }
     }

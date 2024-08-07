@@ -4,24 +4,37 @@
     {
         public Table Table { get; set; }
         public Client Client { get; set; }
-        public List<Item> FoodItems { get; set; } = new List<Item>();
-        public List<Item> DrinkItems { get; set; } = new List<Item>();
+        public List<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
         public DateTime OrderDateTime { get; set; } = DateTime.Now;
 
-        public decimal TotalPrice => CalculateTotalPrice();
+        public decimal TotalPrice => OrderItems.Sum(item => item.TotalPrice);
 
-        private decimal CalculateTotalPrice()
+        public Order() { }
+
+        public Order(Table table, DateTime orderDateTime, Client client, List<OrderItem> orderItems)
         {
-            decimal total = 0;
-            foreach (var item in FoodItems)
+            Table = table;
+            OrderDateTime = orderDateTime;
+            Client = client;
+            OrderItems = orderItems;
+        }
+
+        public Order(Table table, DateTime orderDateTime, Client client, decimal totalPrice)
+        {
+            Table = table;
+            OrderDateTime = orderDateTime;
+            Client = client;
+            SetTotalPrice(totalPrice);
+        }
+
+        private void SetTotalPrice(decimal totalPrice)
+        {
+            // Method used to set the TotalPrice value
+            // Used in the repository when the order is registered from a file
+            foreach (var item in OrderItems)
             {
-                total += item.Price;
+                totalPrice -= item.TotalPrice;
             }
-            foreach (var item in DrinkItems)
-            {
-                total += item.Price;
-            }
-            return total;
         }
     }
 }
