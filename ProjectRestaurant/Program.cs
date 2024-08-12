@@ -33,22 +33,31 @@ namespace ProjectRestaurant
 
             //    Unit tests are required for the system.
 
+            //update logic there it should be selecting tables from the list before placing an order (maybe filter tables by seats)
+            //should create a new name user check if file exist
+            //todo unit tests
+
+
+            //file paths
             var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             var foodFilePath = Path.Combine(baseDirectory, "data", "food.csv");
             var drinksFilePath = Path.Combine(baseDirectory, "data", "drinks.csv");
             var tablesFilePath = Path.Combine(baseDirectory, "data", "tables.csv");
             var ordersFilePath = Path.Combine(baseDirectory, "data", "orders.json");
+            var restaurantCheckFilePath = Path.Combine(baseDirectory, "data", "restaurant_check.txt");
+            var clientCheckBasePath = Path.Combine(baseDirectory, "data");
 
             var tableRepository = new TableRepository(tablesFilePath);
             var orderRepository = new OrderRepository(ordersFilePath);
             var itemRepository = new ItemRepository(foodFilePath, drinksFilePath);
 
             var orderService = new OrderService(orderRepository, itemRepository, tableRepository);
+            var tableService = new TableService(tableRepository, orderService);
             var emailService = new EmailService();
-            var checkService = new CheckService();
-            var tableService = new TableService(tableRepository);
+            var checkRepository = new CheckRepository();
+            var checkService = new CheckService(checkRepository);
 
-            var restaurantService = new RestaurantService(tableRepository, orderRepository, orderService, checkService, emailService);
+            var restaurantService = new RestaurantService(tableRepository, orderRepository, orderService, checkService, emailService, restaurantCheckFilePath, clientCheckBasePath);
 
             var menuPresentation = new MenuPresentation(restaurantService, itemRepository, orderService, tableService);
 

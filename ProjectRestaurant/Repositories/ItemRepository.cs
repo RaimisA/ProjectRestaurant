@@ -12,6 +12,7 @@ namespace ProjectRestaurant.Repositories
         {
             _foodFilePath = foodFilePath;
             _drinkFilePath = drinkFilePath;
+            EnsureFilesExist();
         }
 
         public List<Item> GetFoodItems()
@@ -49,6 +50,42 @@ namespace ProjectRestaurant.Repositories
             var foodItems = GetFoodItems();
             var drinkItems = GetDrinkItems();
             return foodItems.Concat(drinkItems).ToList();
+        }
+
+        private void EnsureFilesExist()
+        {
+            CreateFileIfNotFound(_foodFilePath, new string[]
+            {
+                "Beef Burger,10.59",
+                "Steak,12.99",
+                "Tuna tartar,8.50",
+                "Pasta,7.25",
+                "Pizza,8.99"
+            });
+
+            CreateFileIfNotFound(_drinkFilePath, new string[]
+            {
+                "Pepsi,1.99",
+                "Water,0.99",
+                "Beer,3.50",
+                "Wine,5.00",
+                "Juice,2.50",
+                "Coffee,1.50",
+                "Tea,1.25"
+            });
+        }
+
+        private void CreateFileIfNotFound(string filePath, string[] content)
+        {
+            if (!File.Exists(filePath))
+            {
+                File.WriteAllLines(filePath, content);
+                Console.WriteLine($"{filePath} created.");
+            }
+            else
+            {
+                Console.WriteLine($"{filePath} already exists.");
+            }
         }
     }
 }

@@ -1,47 +1,120 @@
 ﻿using ProjectRestaurant.Models;
+using ProjectRestaurant.Repositories;
+using ProjectRestaurant.Services.Interfaces;
+using System.Globalization;
 using System.Text;
 
 namespace ProjectRestaurant.Services
 {
-    public class CheckService
+    public class CheckService : ICheckService
     {
+        private readonly CheckRepository _checkRepository;
+        private readonly CultureInfo _cultureInfo;
+
+        public CheckService(CheckRepository checkRepository)
+        {
+            _checkRepository = checkRepository;
+            _cultureInfo = new CultureInfo("en-US"); // change to show eur symbol correctly
+        }
+
         public void PrintCheck(Order order, bool isClientCheck)
         {
-            var checkDetails = new StringBuilder();
-            checkDetails.AppendLine("Order Details:");
-            checkDetails.AppendLine($"Table Number: {order.Table.TableNumber}");
-            checkDetails.AppendLine($"Client: {order.Client.Name} ({order.Client.Email})");
-            checkDetails.AppendLine("Items:");
-
-            foreach (var orderItem in order.OrderItems)
-            {
-                checkDetails.AppendLine($"- {orderItem.Item.Name}: {orderItem.Item.Price} EUR x {orderItem.Quantity} = {orderItem.TotalPrice} EUR");
-            }
-
-            checkDetails.AppendLine($"Total Price: {order.TotalPrice} EUR");
-
             if (isClientCheck)
             {
-                Console.WriteLine(checkDetails.ToString());
+                PrintClientCheck(order);
+            }
+            else
+            {
+                PrintRestaurantCheck(order);
             }
         }
 
-        public void SaveCheckToFile(Order order, string filePath)
+        private void PrintClientCheck(Order order)
         {
-            var checkDetails = new StringBuilder();
-            checkDetails.AppendLine("Order Details:");
-            checkDetails.AppendLine($"Table Number: {order.Table.TableNumber}");
-            checkDetails.AppendLine($"Client: {order.Client.Name} ({order.Client.Email})");
-            checkDetails.AppendLine("Items:");
+            PrintHeader("Client Check");
+            PrintOrderDetails(order);
+            PrintClientFooter(order);
+        }
+
+        private void PrintRestaurantCheck(Order order)
+        {
+            PrintHeader("Restaurant Check");
+            PrintOrderDetails(order);
+            PrintRestaurantFooter(order);
+        }
+
+        private void PrintHeader(string checkType)
+        {
+            Console.WriteLine("╔═════════════════════════╗");
+            Console.WriteLine($"║       {checkType.PadRight(17)} ║");
+            Console.WriteLine("╚═════════════════════════╝");
+        }
+
+        private void PrintOrderDetails(Order order)
+        {
+            Console.WriteLine("╔═════════════════════════╗");
+            Console.WriteLine("║       Order Details     ║");
+            Console.WriteLine("╚═════════════════════════╝");
+            foreach (var orderItem in order.OrderItems)
+            {
+                Console.WriteLine($"{orderItem.Item.Name.PadRight(20)} x{orderItem.Quantity} - {orderItem.TotalPrice.ToString("C", _cultureInfo)}");
+            }
+        }
+
+        private void PrintClientFooter(Order order)
+        {
+            Console.WriteLine($"Total: {order.TotalPrice.ToString("C", _cultureInfo)}");
+            Console.WriteLine("Thank you for dining with us!");
+            Console.WriteLine("Contact us at: ProjectRestaurant@codeacademy.lt");
+        }
+
+        private void PrintRestaurantFooter(Order order)
+        {
+            Console.WriteLine($"Total: {order.TotalPrice.ToString("C", _cultureInfo)}");
+            Console.WriteLine($"Table: {order.Table.TableNumber}");
+            Console.WriteLine("Internal Notes: Ensure inventory is updated.");
+        }
+
+        public void SaveCheckToFile(Order order, string filePath, bool isClientCheck)
+        {
+            var checkContent = new StringBuilder();
+
+            if (isClientCheck)
+            {
+                checkContent.AppendLine("╔═════════════════════════╗");
+                checkContent.AppendLine("║       Client Check      ║");
+                checkContent.AppendLine("╚═════════════════════════╝");
+            }
+            else
+            {
+                checkContent.AppendLine("╔═════════════════════════╗");
+                checkContent.AppendLine("║     Restaurant Check    ║");
+                checkContent.AppendLine("╚═════════════════════════╝");
+            }
+
+            checkContent.AppendLine("╔═════════════════════════╗");
+            checkContent.AppendLine("║       Order Details     ║");
+            checkContent.AppendLine("╚═════════════════════════╝");
 
             foreach (var orderItem in order.OrderItems)
             {
-                checkDetails.AppendLine($"- {orderItem.Item.Name}: {orderItem.Item.Price} EUR x {orderItem.Quantity} = {orderItem.TotalPrice} EUR");
+                checkContent.AppendLine($"{orderItem.Item.Name.PadRight(20)} x{orderItem.Quantity} - {orderItem.TotalPrice.ToString("C", _cultureInfo)}");
             }
 
-            checkDetails.AppendLine($"Total Price: {order.TotalPrice} EUR");
+            checkContent.AppendLine($"Total: {order.TotalPrice.ToString("C", _cultureInfo)}");
 
-            File.WriteAllText(filePath, checkDetails.ToString());
+            if (isClientCheck)
+            {
+                checkContent.AppendLine("Thank you for dining with us!");
+                checkContent.AppendLine("Contact us at: ProjectRestaurant@codeacademy.lt");
+            }
+            else
+            {
+                checkContent.AppendLine($"Table: {order.Table.TableNumber}");
+                checkContent.AppendLine("Internal Notes: Ensure inventory is updated.");
+            }
+
+            File.WriteAllText(filePath, checkContent.ToString());
         }
     }
 }

@@ -11,14 +11,14 @@ namespace ProjectRestaurant.Presentation
 {
     public class MenuPresentation
     {
-        private readonly RestaurantService _restaurant;
+        private readonly RestaurantService _restaurantService;
         private readonly ItemRepository _itemRepository;
         private readonly OrderService _orderService;
         private readonly TableService _tableService;
 
-        public MenuPresentation(RestaurantService restaurant, ItemRepository itemRepository, OrderService orderService, TableService tableService)
+        public MenuPresentation(RestaurantService restaurantService, ItemRepository itemRepository, OrderService orderService, TableService tableService)
         {
-            _restaurant = restaurant;
+            _restaurantService = restaurantService;
             _itemRepository = itemRepository;
             _orderService = orderService;
             _tableService = tableService;
@@ -32,14 +32,15 @@ namespace ProjectRestaurant.Presentation
                 Console.WriteLine("1. Place Order");
                 Console.WriteLine("2. View Tables");
                 Console.WriteLine("3. View Orders");
-                Console.WriteLine("4. Exit");
+                Console.WriteLine("4. Complete Order");
+                Console.WriteLine("5. Exit");
                 Console.Write("Select an option: ");
                 var choice = Console.ReadLine();
 
                 switch (choice)
                 {
                     case "1":
-                        _orderService.PlaceOrder();
+                        _restaurantService.RegisterOrder();
                         break;
                     case "2":
                         _tableService.ViewTables();
@@ -48,6 +49,9 @@ namespace ProjectRestaurant.Presentation
                         _orderService.ViewOrders();
                         break;
                     case "4":
+                        _restaurantService.CompleteOrder();
+                        break;
+                    case "5":
                         return;
                     default:
                         Console.WriteLine("Invalid option. Please try again.");

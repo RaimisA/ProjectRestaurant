@@ -11,35 +11,86 @@ namespace ProjectRestaurant.Repositories
 {
     public class OrderRepository
     {
-        private readonly string _ordersFilePath;
+        private readonly List<Order> _orders;
+        private readonly string _filePath;
 
-        public OrderRepository(string ordersFilePath)
+        public OrderRepository(string filePath)
         {
-            _ordersFilePath = ordersFilePath;
-        }
-
-        public List<Order> GetAllOrders()
-        {
-            if (!File.Exists(_ordersFilePath))
+            _filePath = filePath;
+            if (File.Exists(filePath))
             {
-                return new List<Order>();
+                var json = File.ReadAllText(filePath);
+                _orders = JsonSerializer.Deserialize<List<Order>>(json) ?? new List<Order>();
             }
-
-            var json = File.ReadAllText(_ordersFilePath);
-            return JsonSerializer.Deserialize<List<Order>>(json) ?? new List<Order>();
+            else
+            {
+                _orders = new List<Order>();
+            }
         }
 
         public void AddOrder(Order order)
         {
-            var orders = GetAllOrders();
-            orders.Add(order);
-            SaveOrdersToFile(orders);
+            _orders.Add(order);
+            SaveOrdersToFile();
         }
 
-        private void SaveOrdersToFile(List<Order> orders)
+        public List<Order> GetAllOrders()
         {
-            var json = JsonSerializer.Serialize(orders, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_ordersFilePath, json);
+            return _orders;
+        }
+
+        public void MarkOrderInProgress(int tableNumber)
+        {
+            var order = _orders.FirstOrDefault(o => o.Table != null && o.Table.TableNumber == tableNumber && !o.IsCompleted && !o.IsCanceled);
+            if (order != null)
+            {
+                order.IsInProgress = true;
+                SaveOrdersToFile();
+            }
+        }
+
+        public void MarkOrderComplete(int tableNumber)
+        {
+            var order = _orders.FirstOrDefault(o => o.Table != null && o.Table.TableNumber == tableNumber && o.IsInProgress);
+            if (order != null)
+            {
+                order.IsInProgress = false;
+                order.IsCompleted = true;
+                SaveOrdersToFile();
+            }
+        }
+
+        public void MarkOrderCanceled(int tableNumber)
+        {
+            var order = _orders.FirstOrDefault(o => o.Table != null && o.Table.TableNumber == tableNumber && o.IsInProgress);
+            if (order != null)
+            {
+                order.IsInProgress = false;
+                order.IsCanceled = true;
+                SaveOrdersToFile();
+            }
+        }
+
+        //public void UpdateOrder(Order updatedOrder)
+        //{
+        //    var order = _orders.FirstOrDefault(o => o.Id == updatedOrder.Id);
+        //    if (order != null)
+        //    {
+        //        order.Table = updatedOrder.Table;
+        //        order.Client = updatedOrder.Client;
+        //        order.OrderItems = updatedOrder.OrderItems;
+        //        order.OrderDateTime = updatedOrder.OrderDateTime;
+        //        order.IsInProgress = updatedOrder.IsInProgress;
+        //        order.IsCompleted = updatedOrder.IsCompleted;
+        //        order.IsCanceled = updatedOrder.IsCanceled;
+        //        SaveOrdersToFile();
+        //    }
+        //}
+
+        private void SaveOrdersToFile()
+        {
+            var json = JsonSerializer.Serialize(_orders);
+            File.WriteAllText(_filePath, json);
         }
     }
 }

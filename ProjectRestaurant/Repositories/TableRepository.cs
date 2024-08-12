@@ -10,6 +10,7 @@ namespace ProjectRestaurant.Repositories
         public TableRepository(string filePath)
         {
             _filePath = filePath;
+            EnsureFileExists();
             LoadTablesFromFile();
         }
 
@@ -70,6 +71,30 @@ namespace ProjectRestaurant.Repositories
         {
             var lines = tables.Select(t => $"{t.TableNumber},{t.Seats},{t.IsOccupied}");
             File.WriteAllLines(_filePath, lines);
+        }
+
+        private void EnsureFileExists()
+        {
+            CreateFileIfNotFound(_filePath, new string[]
+            {
+                "1,4,False",
+                "2,4,False",
+                "3,2,False",
+                "4,6,False"
+            });
+        }
+
+        private void CreateFileIfNotFound(string filePath, string[] content)
+        {
+            if (!File.Exists(filePath))
+            {
+                File.WriteAllLines(filePath, content);
+                Console.WriteLine($"{filePath} created.");
+            }
+            else
+            {
+                Console.WriteLine($"{filePath} already exists.");
+            }
         }
     }
 }

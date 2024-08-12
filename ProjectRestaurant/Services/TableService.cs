@@ -4,58 +4,64 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ProjectRestaurant.Services.Interfaces;
 
 namespace ProjectRestaurant.Services
 {
-    public class TableService
+    public class TableService : ITableService
     {
         private readonly TableRepository _tableRepository;
+        private readonly OrderService _orderService;
 
-        public TableService(TableRepository tableRepository)
+        public TableService(TableRepository tableRepository, OrderService orderService)
         {
             _tableRepository = tableRepository;
+            _orderService = orderService;
         }
 
         public void ViewTables()
         {
-            while (true)
+            Console.Clear();
+            var tables = _tableRepository.GetAllTables();
+            if (tables.Count == 0)
             {
-                Console.Clear();
-                var tables = _tableRepository.GetAllTables();
-                foreach (var table in tables)
-                {
-                    Console.WriteLine($"Table {table.TableNumber}: table seats: {table.Seats}, {(table.IsOccupied ? "Occupied" : "Available")}");
-                }
+                Console.WriteLine("No tables found.");
+                Console.ReadKey();
+                return;
+            }
 
-                Console.WriteLine("Enter the table number to free up (or 'back' to return to the main menu): ");
-                var input = Console.ReadLine();
+            foreach (var table in tables)
+            {
+                Console.WriteLine($"Table {table.TableNumber} - Seats: {table.Seats} - {(table.IsOccupied ? "Occupied" : "Available")}");
+            }
 
-                if (input != null && input.ToLower() == "back")
-                {
-                    break;
-                }
+            Console.Write("Enter table number to free up (or 'q' to return to the main menu): ");
+            var input = Console.ReadLine();
+            if (input != null && input.ToLower() == "q")
+            {
+                return;
+            }
 
-                if (int.TryParse(input, out var tableNumber))
+            if (int.TryParse(input, out var tableNumber))
+            {
+                var table = tables.FirstOrDefault(t => t.TableNumber == tableNumber);
+                if (table != null && table.IsOccupied)
                 {
-                    var table = tables.FirstOrDefault(t => t.TableNumber == tableNumber);
-                    if (table != null && table.IsOccupied)
-                    {
-                        _tableRepository.MarkTableAsAvailable(table.TableNumber);
-                        Console.WriteLine($"Table {table.TableNumber} is now free.");
-                        Console.ReadKey();
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid table number or the table is already free.");
-                        Console.ReadKey();
-                    }
+                    _tableRepository.MarkTableAsAvailable(tableNumber);
+                    _orderService.MarkOrderAsCanceled(tableNumber);
+                    Console.WriteLine($"Table {tableNumber} is now free and the associated order has been canceled.");
                 }
                 else
                 {
-                    Console.WriteLine("Invalid input. Please try again.");
-                    Console.ReadKey();
+                    Console.WriteLine("Table is either not found or already free.");
                 }
             }
+            else
+            {
+                Console.WriteLine("Invalid table number.");
+            }
+
+            Console.ReadKey();
         }
     }
 }
