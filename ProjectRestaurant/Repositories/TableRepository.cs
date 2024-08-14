@@ -1,8 +1,9 @@
 ﻿using ProjectRestaurant.Models;
+using ProjectRestaurant.Repositories.Interfaces;
 
 namespace ProjectRestaurant.Repositories
 {
-    public class TableRepository
+    public class TableRepository : ITableRepository
     {
         private readonly string _filePath;
         private List<Table> tables = new List<Table>();

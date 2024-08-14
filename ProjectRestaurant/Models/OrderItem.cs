@@ -10,6 +10,12 @@ namespace ProjectRestaurant.Models
     {
         public Item Item { get; set; }
         public int Quantity { get; set; }
-        public decimal TotalPrice => Item.Price * Quantity;
+        public decimal TotalPrice
+        {
+            get
+            {
+                return Item.Price * Quantity;
+            }
+        }
     }
 }

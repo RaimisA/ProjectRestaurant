@@ -1,5 +1,6 @@
 ﻿using ProjectRestaurant.Models;
 using ProjectRestaurant.Repositories;
+using ProjectRestaurant.Repositories.Interfaces;
 using ProjectRestaurant.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -13,15 +14,15 @@ namespace ProjectRestaurant.Services
 {
     public class RestaurantService : IRestaurantService
     {
-        private readonly TableRepository _tableRepository;
-        private readonly OrderRepository _orderRepository;
-        private readonly OrderService _orderService;
-        private readonly CheckService _checkService;
+        private readonly ITableRepository _tableRepository;
+        private readonly IOrderRepository _orderRepository;
+        private readonly IOrderService _orderService;
+        private readonly ICheckService _checkService;
         private readonly IEmailService _emailService;
         private readonly string _restaurantCheckFilePath;
         private readonly string _clientCheckBasePath;
 
-        public RestaurantService(TableRepository tableRepository, OrderRepository orderRepository, OrderService orderService, CheckService checkService, IEmailService emailService, string restaurantCheckFilePath, string clientCheckBasePath)
+        public RestaurantService(ITableRepository tableRepository, IOrderRepository orderRepository, IOrderService orderService, ICheckService checkService, IEmailService emailService, string restaurantCheckFilePath, string clientCheckBasePath)
         {
             _tableRepository = tableRepository;
             _orderRepository = orderRepository;
@@ -108,24 +109,26 @@ namespace ProjectRestaurant.Services
 
             _orderService.ShowOrderForTable(tableNumber);
 
-            bool printCheck = GetUserConfirmation("Does the client want the check to be printed? (yes/no or 'q' to return to the main menu): ");
-            if (printCheck == false) return;
+            var printCheck = HandleUserConfirmation("Does the client want the check to be printed? (yes/no or 'q' to return to the main menu): ");
+            if (printCheck == "q") return;
 
-            bool emailCheck = GetUserConfirmation("Does the client want to receive the check via email? (yes/no or 'q' to return to the main menu): ");
-            if (emailCheck == false) return;
+            var emailCheck = HandleUserConfirmation("Does the client want to receive the check via email? (yes/no or 'q' to return to the main menu): ");
+            if (emailCheck == "q") return;
 
-            if (emailCheck && string.IsNullOrEmpty(order.Client?.Email))
+            if (emailCheck == "yes" && string.IsNullOrEmpty(order.Client?.Email))
             {
-                order.Client.Email = GetValidEmailFromUser();
-                if (order.Client.Email == null) return;
+                var email = GetValidEmailFromUser();
+                if (email == null) return; // Return to main menu if user chooses 'q'
+                if (order.Client == null) order.Client = new Client(); // Ensure Client is not null
+                order.Client.Email = email;
             }
 
-            bool emailRestaurantCheck = GetUserConfirmation("Should the restaurant check be sent via email? (yes/no or 'q' to return to the main menu): ");
-            if (emailRestaurantCheck == false) return;
+            var emailRestaurantCheck = HandleUserConfirmation("Should the restaurant check be sent via email? (yes/no or 'q' to return to the main menu): ");
+            if (emailRestaurantCheck == "q") return;
 
             Console.Clear();
 
-            ProcessOrder(order, printCheck, emailCheck, emailRestaurantCheck);
+            ProcessOrder(order, printCheck == "yes", emailCheck == "yes", emailRestaurantCheck == "yes");
             _orderService.MarkOrderAsCompleted(tableNumber);
             FreeTable(tableNumber);
 
@@ -133,15 +136,45 @@ namespace ProjectRestaurant.Services
             Console.ReadKey();
         }
 
-        private bool GetUserConfirmation(string message)
+        private string HandleUserConfirmation(string message)
         {
-            Console.Write(message);
-            var option = Console.ReadLine();
-            if (option != null && option.ToLower() == "q")
+            while (true)
             {
-                return false;
+                Console.Write(message);
+                var option = Console.ReadLine()?.ToLower();
+                if (option == "yes" || option == "no" || option == "q")
+                {
+                    return option;
+                }
+                Console.WriteLine("Invalid input. Please enter 'yes', 'no', or 'q'.");
             }
-            return option != null && option.ToLower() == "yes";
+        }
+
+        private void ProcessOrder(Order order, bool printCheck, bool emailCheck, bool emailRestaurantCheck)
+        {
+            // Print and save the restaurant check
+            _checkService.PrintCheck(order, isClientCheck: false);
+            _checkService.SaveCheckToFile(order, _restaurantCheckFilePath, isClientCheck: false);
+            Console.WriteLine("Printing restaurant check");
+
+            if (emailRestaurantCheck)
+            {
+                _emailService.SendEmail("ProjectRestaurant@codeacademy.lt", "Restaurant Check", "Restaurant check details...");
+            }
+
+            // Print and save the client check if requested
+            if (printCheck)
+            {
+                _checkService.PrintCheck(order, isClientCheck: true);
+                Console.WriteLine("Printing client check");
+            }
+
+            if (emailCheck)
+            {
+                var clientCheckFilePath = Path.Combine(_clientCheckBasePath, $"{order.Client.Name}_check.txt");
+                _checkService.SaveCheckToFile(order, clientCheckFilePath, isClientCheck: true);
+                _emailService.SendEmail(order.Client.Email, "Your Order", "Order details...");
+            }
         }
 
         private string GetValidEmailFromUser()
@@ -161,34 +194,6 @@ namespace ProjectRestaurant.Services
                 else
                 {
                     Console.WriteLine("Invalid email. Please enter a valid email address.");
-                }
-            }
-        }
-
-        private void ProcessOrder(Order order, bool printCheck, bool emailCheck, bool emailRestaurantCheck)
-        {
-            _checkService.PrintCheck(order, isClientCheck: false);
-            _checkService.SaveCheckToFile(order, _restaurantCheckFilePath, isClientCheck: false);
-            Console.WriteLine("Printing restaurant check");
-
-            if (emailRestaurantCheck)
-            {
-                _emailService.SendEmail("ProjectRestaurant@codeacademy.lt", "Restaurant Check", "Restaurant check details...");
-            }
-
-            if (!string.IsNullOrEmpty(order.Client?.Email))
-            {
-                if (printCheck)
-                {
-                    _checkService.PrintCheck(order, isClientCheck: true);
-                }
-                var clientCheckFilePath = Path.Combine(_clientCheckBasePath, $"{order.Client.Name}_check.txt");
-                _checkService.SaveCheckToFile(order, clientCheckFilePath, isClientCheck: true);
-                Console.WriteLine($"Check saved to {clientCheckFilePath}");
-
-                if (emailCheck)
-                {
-                    _emailService.SendEmail(order.Client.Email, "Your Order", "Order details...");
                 }
             }
         }

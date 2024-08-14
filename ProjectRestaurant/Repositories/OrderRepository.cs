@@ -1,4 +1,6 @@
-﻿using ProjectRestaurant.Models;
+﻿using ProjectRestaurant.Enums;
+using ProjectRestaurant.Models;
+using ProjectRestaurant.Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -9,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace ProjectRestaurant.Repositories
 {
-    public class OrderRepository
+    public class OrderRepository : IOrderRepository
     {
         private readonly List<Order> _orders;
         private readonly string _filePath;
@@ -41,52 +43,33 @@ namespace ProjectRestaurant.Repositories
 
         public void MarkOrderInProgress(int tableNumber)
         {
-            var order = _orders.FirstOrDefault(o => o.Table != null && o.Table.TableNumber == tableNumber && !o.IsCompleted && !o.IsCanceled);
+            var order = _orders.FirstOrDefault(o => o.Table != null && o.Table.TableNumber == tableNumber && o.Status == OrderStatus.New);
             if (order != null)
             {
-                order.IsInProgress = true;
+                order.Status = OrderStatus.InProgress;
                 SaveOrdersToFile();
             }
         }
 
         public void MarkOrderComplete(int tableNumber)
         {
-            var order = _orders.FirstOrDefault(o => o.Table != null && o.Table.TableNumber == tableNumber && o.IsInProgress);
+            var order = _orders.FirstOrDefault(o => o.Table != null && o.Table.TableNumber == tableNumber && o.Status == OrderStatus.InProgress);
             if (order != null)
             {
-                order.IsInProgress = false;
-                order.IsCompleted = true;
+                order.Status = OrderStatus.Completed;
                 SaveOrdersToFile();
             }
         }
 
         public void MarkOrderCanceled(int tableNumber)
         {
-            var order = _orders.FirstOrDefault(o => o.Table != null && o.Table.TableNumber == tableNumber && o.IsInProgress);
+            var order = _orders.FirstOrDefault(o => o.Table != null && o.Table.TableNumber == tableNumber && o.Status == OrderStatus.InProgress);
             if (order != null)
             {
-                order.IsInProgress = false;
-                order.IsCanceled = true;
+                order.Status = OrderStatus.Canceled;
                 SaveOrdersToFile();
             }
         }
-
-        //public void UpdateOrder(Order updatedOrder)
-        //{
-        //    var order = _orders.FirstOrDefault(o => o.Id == updatedOrder.Id);
-        //    if (order != null)
-        //    {
-        //        order.Table = updatedOrder.Table;
-        //        order.Client = updatedOrder.Client;
-        //        order.OrderItems = updatedOrder.OrderItems;
-        //        order.OrderDateTime = updatedOrder.OrderDateTime;
-        //        order.IsInProgress = updatedOrder.IsInProgress;
-        //        order.IsCompleted = updatedOrder.IsCompleted;
-        //        order.IsCanceled = updatedOrder.IsCanceled;
-        //        SaveOrdersToFile();
-        //    }
-        //}
-
         private void SaveOrdersToFile()
         {
             var json = JsonSerializer.Serialize(_orders);

@@ -1,22 +1,24 @@
 ﻿using ProjectRestaurant.Models;
 using ProjectRestaurant.Services;
 using ProjectRestaurant.Repositories;
+using ProjectRestaurant.Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ProjectRestaurant.Services.Interfaces;
 
 namespace ProjectRestaurant.Presentation
 {
     public class MenuPresentation
     {
-        private readonly RestaurantService _restaurantService;
-        private readonly ItemRepository _itemRepository;
-        private readonly OrderService _orderService;
-        private readonly TableService _tableService;
+        private readonly IRestaurantService _restaurantService;
+        private readonly IItemRepository _itemRepository;
+        private readonly IOrderService _orderService;
+        private readonly ITableService _tableService;
 
-        public MenuPresentation(RestaurantService restaurantService, ItemRepository itemRepository, OrderService orderService, TableService tableService)
+        public MenuPresentation(IRestaurantService restaurantService, IItemRepository itemRepository, IOrderService orderService, ITableService tableService)
         {
             _restaurantService = restaurantService;
             _itemRepository = itemRepository;

@@ -6,16 +6,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ProjectRestaurant.Services.Interfaces;
+using ProjectRestaurant.Enums;
+using ProjectRestaurant.Repositories.Interfaces;
 
 namespace ProjectRestaurant.Services
 {
     public class OrderService : IOrderService
     {
-        private readonly OrderRepository _orderRepository;
-        private readonly ItemRepository _itemRepository;
-        private readonly TableRepository _tableRepository;
+        private readonly IOrderRepository _orderRepository;
+        private readonly IItemRepository _itemRepository;
+        private readonly ITableRepository _tableRepository;
 
-        public OrderService(OrderRepository orderRepository, ItemRepository itemRepository, TableRepository tableRepository)
+        public OrderService(IOrderRepository orderRepository, IItemRepository itemRepository, ITableRepository tableRepository)
         {
             _orderRepository = orderRepository;
             _itemRepository = itemRepository;
@@ -25,11 +27,20 @@ namespace ProjectRestaurant.Services
         public Order? PlaceOrder()
         {
             Console.Clear();
-            int numberOfPeople = GetNumberOfPeople();
-            if (numberOfPeople == -1) return null;
+            int numberOfPeople;
+            Table? table;
 
-            var table = GetAvailableTable(numberOfPeople);
-            if (table == null) return null;
+            while (true)
+            {
+                numberOfPeople = GetNumberOfPeople();
+                if (numberOfPeople == -1) return null;
+
+                table = GetAvailableTable(numberOfPeople);
+                if (table != null) break;
+
+                Console.WriteLine("No available tables with enough seats. Please try again.");
+                Console.ReadKey();
+            }
 
             var client = GetClientDetails();
             if (client == null) return null;
@@ -63,7 +74,7 @@ namespace ProjectRestaurant.Services
         public Order? GetOrderForTable(int tableNumber)
         {
             return _orderRepository.GetAllOrders()
-                .FirstOrDefault(o => o.Table?.TableNumber == tableNumber && o.IsInProgress);
+                .FirstOrDefault(o => o.Table?.TableNumber == tableNumber && o.Status == OrderStatus.InProgress);
         }
 
         public void ShowOrderForTable(int tableNumber)
@@ -113,10 +124,6 @@ namespace ProjectRestaurant.Services
         private Table? GetAvailableTable(int numberOfPeople)
         {
             var table = _tableRepository.GetAllTables().FirstOrDefault(t => !t.IsOccupied && t.Seats >= numberOfPeople);
-            if (table == null)
-            {
-                Console.WriteLine("No available tables with enough seats.");
-            }
             return table;
         }
 
@@ -219,8 +226,8 @@ namespace ProjectRestaurant.Services
             {
                 Table = table,
                 Client = client,
-                OrderItems = orderItems,
-                OrderDateTime = DateTime.Now
+                Items = orderItems,
+                DateTime = DateTime.Now
             };
         }
 
@@ -238,8 +245,8 @@ namespace ProjectRestaurant.Services
             foreach (var order in orders)
             {
                 string status = GetOrderStatus(order);
-                Console.WriteLine($"Order for Table {order.Table?.TableNumber} at {order.OrderDateTime}: Total Price = {order.TotalPrice} EUR {status}");
-                foreach (var item in order.OrderItems)
+                Console.WriteLine($"Order for Table {order.Table?.TableNumber} at {order.DateTime}: Total Price = {order.TotalPrice} EUR {status}");
+                foreach (var item in order.Items)
                 {
                     Console.WriteLine($"  - {item.Item.Name} x {item.Quantity} = {item.TotalPrice} EUR");
                 }
@@ -248,25 +255,30 @@ namespace ProjectRestaurant.Services
 
         private string GetOrderStatus(Order order)
         {
-            if (order.IsCompleted)
-            {
-                return "(Order Completed)";
-            }
-            if (order.IsCanceled)
-            {
-                return "(Order Canceled)";
-            }
-            if (order.IsInProgress)
+            if (order.Status == OrderStatus.InProgress)
             {
                 return "(Order in progress)";
             }
-            return "(Unknown Status)";
+            if (order.Status == OrderStatus.Completed)
+            {
+                return "(Order completed)";
+            }
+            if (order.Status == OrderStatus.Canceled)
+            {
+                return "(Order canceled)";
+            }
+            if (order.Status == OrderStatus.New)
+            {
+                return "(New order)";
+            }
+
+            else return "Unknown Order";
         }
 
         private void DisplayOrder(Order order)
         {
-            Console.WriteLine($"Order for Table {order.Table?.TableNumber} at {order.OrderDateTime}: Total Price = {order.TotalPrice} EUR");
-            foreach (var item in order.OrderItems)
+            Console.WriteLine($"Order for Table {order.Table?.TableNumber} at {order.DateTime}: Total Price = {order.TotalPrice} EUR");
+            foreach (var item in order.Items)
             {
                 Console.WriteLine($"  - {item.Item.Name} x {item.Quantity} = {item.TotalPrice} EUR");
             }

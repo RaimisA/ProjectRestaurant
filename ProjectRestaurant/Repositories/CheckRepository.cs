@@ -1,32 +1,42 @@
 ﻿using ProjectRestaurant.Models;
+using ProjectRestaurant.Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ProjectRestaurant.Repositories
 {
-    public class CheckRepository
+    public class CheckRepository : ICheckRepository
     {
         public void SaveCheckToFile(Order order, string filePath, bool isClientCheck)
         {
-            using (var writer = new StreamWriter(filePath, true))
+            using (var writer = new StreamWriter(filePath))
             {
-                writer.WriteLine($"Order for Table {order.Table.TableNumber} at {order.OrderDateTime}: Total Price = {order.TotalPrice} EUR");
-                foreach (var item in order.OrderItems)
-                {
-                    writer.WriteLine($"  - {item.Item.Name} x {item.Quantity} = {item.TotalPrice} EUR");
-                }
                 if (isClientCheck)
-                {
+                { 
                     writer.WriteLine("This is a client check.");
                 }
                 else
                 {
                     writer.WriteLine("This is a restaurant check.");
                 }
-                writer.WriteLine();
+
+                if (order.Table != null)
+                {
+                    writer.WriteLine($"Order for Table {order.Table.TableNumber}");
+                }
+                else
+                {
+                    writer.WriteLine("Order for an unspecified table");
+                }
+
+                foreach (var item in order.Items)
+                {
+                    writer.WriteLine($"{item.Item.Name} x {item.Quantity} = {item.TotalPrice.ToString("F2", CultureInfo.InvariantCulture)} EUR");
+                }
             }
         }
     }

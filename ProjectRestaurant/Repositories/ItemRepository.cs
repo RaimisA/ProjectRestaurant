@@ -1,9 +1,10 @@
 ﻿using ProjectRestaurant.Models;
+using ProjectRestaurant.Repositories.Interfaces;
 using System.Globalization;
 
 namespace ProjectRestaurant.Repositories
 {
-    public class ItemRepository
+    public class ItemRepository : IItemRepository
     {
         private readonly string _foodFilePath;
         private readonly string _drinkFilePath;

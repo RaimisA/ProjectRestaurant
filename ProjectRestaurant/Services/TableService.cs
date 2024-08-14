@@ -5,15 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ProjectRestaurant.Services.Interfaces;
+using ProjectRestaurant.Repositories.Interfaces;
 
 namespace ProjectRestaurant.Services
 {
     public class TableService : ITableService
     {
-        private readonly TableRepository _tableRepository;
-        private readonly OrderService _orderService;
+        private readonly ITableRepository _tableRepository;
+        private readonly IOrderService _orderService;
 
-        public TableService(TableRepository tableRepository, OrderService orderService)
+        public TableService(ITableRepository tableRepository, IOrderService orderService)
         {
             _tableRepository = tableRepository;
             _orderService = orderService;
