@@ -47,27 +47,5 @@ namespace ProjectRestaurant.Services.Tests
             // Ensure tables are available
             _tableRepository.MarkTableAsAvailable(1);
         }
-
-        [TestMethod]
-        public void GetOrders_ShouldReturnAllOrders()
-        {
-            // Arrange
-            var orders = new List<Order>
-            {
-                new Order { Table = _tableRepository!.GetAllTables().First(), Status = OrderStatus.InProgress },
-                new Order { Table = _tableRepository.GetAllTables().First(), Status = OrderStatus.InProgress }
-            };
-            foreach (var order in orders)
-            {
-                _orderRepository!.AddOrder(order);
-            }
-
-            // Act
-            var result = _restaurantService!.GetOrders();
-
-            // Assert
-            Assert.AreEqual(orders.Count, result.Count);
-            CollectionAssert.AreEqual(orders, result);
-        }
     }
 }

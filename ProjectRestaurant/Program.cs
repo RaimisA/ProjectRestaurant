@@ -13,8 +13,6 @@ namespace ProjectRestaurant
     {
         static void Main(string[] args)
         {
-            // fix q not working in complete order
-
             Console.OutputEncoding = Encoding.UTF8;
             // File paths
             var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
@@ -42,7 +40,6 @@ namespace ProjectRestaurant
 
             // Run the application
             menuPresentation.DisplayMenu();
-
         }
     }
 }

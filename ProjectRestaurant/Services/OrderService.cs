@@ -129,21 +129,21 @@ namespace ProjectRestaurant.Services
 
         private Client? GetClientDetails()
         {
-            Console.Write("Enter client name (or 'q' to return to the main menu): ");
-            var clientName = Console.ReadLine();
-            if (clientName != null && clientName.ToLower() == "q")
+            while (true)
             {
-                return null;
+                Console.Write("Enter client name (or 'q' to return to the main menu): ");
+                var clientName = Console.ReadLine();
+                if (clientName != null && clientName.ToLower() == "q")
+                {
+                    return null;
+                }
+                if (!string.IsNullOrEmpty(clientName))
+                {
+                    return new Client { Name = clientName };
+                }
+                Console.WriteLine("Client name cannot be empty. Please enter a valid name.");
             }
-            if (string.IsNullOrEmpty(clientName))
-            {
-                Console.WriteLine("Client name cannot be empty.");
-                return null;
-            }
-
-            return new Client { Name = clientName };
         }
-
         private List<OrderItem>? GetOrderItems()
         {
             var orderItems = new List<OrderItem>();
@@ -153,7 +153,7 @@ namespace ProjectRestaurant.Services
                 Console.Clear();
                 DisplayAvailableItems();
 
-                Console.Write("Enter item name to add to order (or 'done' to finish): ");
+                Console.Write("Enter item name to add to order (or 'done' to finish) ('q' to return): ");
                 var itemName = Console.ReadLine();
                 if (itemName != null && itemName.ToLower() == "q")
                 {
@@ -161,7 +161,8 @@ namespace ProjectRestaurant.Services
                 }
                 if (string.IsNullOrEmpty(itemName))
                 {
-                    Console.WriteLine("Item name cannot be empty.");
+                    Console.WriteLine("Item name cannot be empty. Press any key to continue...");
+                    Console.ReadKey();
                     continue;
                 }
 
